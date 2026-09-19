@@ -3,6 +3,7 @@ using FikaServer.Services;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.Helpers.Profile;
 using SPTarkov.Server.Core.Models.Common;
+using SPTarkov.Server.Core.Models.Eft.Common;
 using SPTarkov.Server.Core.Utils;
 
 namespace FikaServer.Callbacks;
@@ -27,7 +28,7 @@ public class HideoutCallbacks(
     /// </summary>
     public ValueTask<string> HandleHideoutHost(string url, FikaHideoutHostRequest info, MongoId sessionID)
     {
-        hideoutHostService.SetHost(info, HostAliases(sessionID, info.AccountId));
+        hideoutHostService.SetHost(info, HostAliases(sessionID, info.AccountId, info.Aliases));
         return new ValueTask<string>(httpResponseUtil.NullResponse());
     }
 
@@ -36,7 +37,25 @@ public class HideoutCallbacks(
     /// </summary>
     public ValueTask<string> HandleHideoutGetHost(string url, FikaHideoutHostRequest info, MongoId sessionID)
     {
-        return new ValueTask<string>(httpResponseUtil.NoBody(hideoutHostService.GetHost(info.AccountId)));
+        var host = hideoutHostService.GetHost(info.AccountId);
+        if (!host.Ok)
+        {
+            foreach (var key in HostLookupKeys(info.AccountId))
+            {
+                if (string.Equals(key, info.AccountId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                host = hideoutHostService.GetHost(key);
+                if (host.Ok)
+                {
+                    break;
+                }
+            }
+        }
+
+        return new ValueTask<string>(httpResponseUtil.NoBody(host));
     }
 
     /// <summary>
@@ -48,20 +67,74 @@ public class HideoutCallbacks(
         return new ValueTask<string>(httpResponseUtil.NullResponse());
     }
 
-    private string[] HostAliases(MongoId sessionId, string? accountId)
+    private string[] HostAliases(MongoId sessionId, string? accountId, string[]? extra)
     {
         var keys = new HashSet<string>(StringComparer.Ordinal);
-        if (!string.IsNullOrWhiteSpace(accountId))
+        AddKeys(keys, accountId);
+        AddProfileKeys(keys, profileHelper.GetPmcProfile(sessionId));
+        AddFullProfileKeys(keys, profileHelper.GetFullProfileByAccountId(accountId ?? ""));
+        if (extra != null)
         {
-            keys.Add(accountId);
-        }
-
-        var pmc = profileHelper.GetPmcProfile(sessionId);
-        if (pmc?.Aid is int aid)
-        {
-            keys.Add(aid.ToString());
+            foreach (var key in extra)
+            {
+                AddKeys(keys, key);
+            }
         }
 
         return [.. keys];
+    }
+
+    private string[] HostLookupKeys(string? accountId)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        AddKeys(keys, accountId);
+        AddFullProfileKeys(keys, profileHelper.GetFullProfileByAccountId(accountId ?? ""));
+        return [.. keys];
+    }
+
+    private static void AddFullProfileKeys(HashSet<string> keys, SPTarkov.Server.Core.Models.Eft.Profile.SptProfile? profile)
+    {
+        if (profile == null)
+        {
+            return;
+        }
+
+        if (profile.ProfileInfo?.Aid is int infoAid)
+        {
+            AddKeys(keys, infoAid.ToString());
+        }
+
+        if (profile.ProfileInfo?.ProfileId is { } profileId)
+        {
+            AddKeys(keys, profileId.ToString());
+        }
+
+        AddProfileKeys(keys, profile.CharacterData?.PmcData);
+    }
+
+    private static void AddProfileKeys(HashSet<string> keys, PmcData? pmc)
+    {
+        if (pmc == null)
+        {
+            return;
+        }
+
+        if (pmc.Aid is int aid)
+        {
+            AddKeys(keys, aid.ToString());
+        }
+
+        if (pmc.Id is { } id)
+        {
+            AddKeys(keys, id.ToString());
+        }
+    }
+
+    private static void AddKeys(HashSet<string> keys, string? key)
+    {
+        if (!string.IsNullOrWhiteSpace(key))
+        {
+            keys.Add(key);
+        }
     }
 }

@@ -8,6 +8,9 @@ public record FikaHideoutHostRequest : IRequestData
     [JsonPropertyName("accountId")]
     public string? AccountId { get; set; }
 
+    [JsonPropertyName("aliases")]
+    public string[]? Aliases { get; set; }
+
     [JsonPropertyName("ips")]
     public string[]? Ips { get; set; }
 
