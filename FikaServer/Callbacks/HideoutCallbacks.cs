@@ -1,13 +1,18 @@
 using FikaServer.Models.Fika.Routes.Hideout;
 using FikaServer.Services;
 using SPTarkov.DI.Annotations;
+using SPTarkov.Server.Core.Helpers.Profile;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Utils;
 
 namespace FikaServer.Callbacks;
 
 [Injectable]
-public class HideoutCallbacks(HttpResponseUtil httpResponseUtil, HideoutViewService hideoutViewService, HideoutHostService hideoutHostService)
+public class HideoutCallbacks(
+    HttpResponseUtil httpResponseUtil,
+    HideoutViewService hideoutViewService,
+    HideoutHostService hideoutHostService,
+    ProfileHelper profileHelper)
 {
     /// <summary>
     /// Handle /fika/hideout/view
@@ -22,7 +27,7 @@ public class HideoutCallbacks(HttpResponseUtil httpResponseUtil, HideoutViewServ
     /// </summary>
     public ValueTask<string> HandleHideoutHost(string url, FikaHideoutHostRequest info, MongoId sessionID)
     {
-        hideoutHostService.SetHost(info);
+        hideoutHostService.SetHost(info, HostAliases(sessionID, info.AccountId));
         return new ValueTask<string>(httpResponseUtil.NullResponse());
     }
 
@@ -41,5 +46,22 @@ public class HideoutCallbacks(HttpResponseUtil httpResponseUtil, HideoutViewServ
     {
         hideoutHostService.Leave(info.AccountId);
         return new ValueTask<string>(httpResponseUtil.NullResponse());
+    }
+
+    private string[] HostAliases(MongoId sessionId, string? accountId)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        if (!string.IsNullOrWhiteSpace(accountId))
+        {
+            keys.Add(accountId);
+        }
+
+        var pmc = profileHelper.GetPmcProfile(sessionId);
+        if (pmc?.Aid is int aid)
+        {
+            keys.Add(aid.ToString());
+        }
+
+        return [.. keys];
     }
 }
