@@ -2,6 +2,7 @@ using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Eft.Profile;
 using System.Text.Json.Serialization;
+using HideoutState = SPTarkov.Server.Core.Models.Eft.Common.Tables.Hideout;
 
 namespace FikaServer.Models.Fika.Routes.Hideout;
 
@@ -21,7 +22,7 @@ public record FikaHideoutViewResponse
     public OtherProfileInfo? Info { get; set; }
 
     [JsonPropertyName("hideout")]
-    public Hideout? Hideout { get; set; }
+    public HideoutState? Hideout { get; set; }
 
     [JsonPropertyName("customizationStash")]
     public string? CustomizationStash { get; set; }
