@@ -51,17 +51,18 @@ jobs:
 
       - name: Stage server package
         run: |
-          mkdir -p dist/SPT_Runtime/user/mods/fika-server
-          cp artifacts/server/FikaServer.dll dist/SPT_Runtime/user/mods/fika-server/
-          cp artifacts/server/FikaShared.dll dist/SPT_Runtime/user/mods/fika-server/
-          cp -r FikaServer/Assets dist/SPT_Runtime/user/mods/fika-server/assets
-          cp Licenses/* dist/SPT_Runtime/user/mods/fika-server/
+          mkdir -p package/SPT_Runtime/user/mods/fika-server
+          cp artifacts/server/FikaServer.dll package/SPT_Runtime/user/mods/fika-server/
+          cp artifacts/server/FikaShared.dll package/SPT_Runtime/user/mods/fika-server/
+          cp -r FikaServer/Assets package/SPT_Runtime/user/mods/fika-server/assets
+          cp Licenses/* package/SPT_Runtime/user/mods/fika-server/
+          find package -type f
 
       - name: Upload server
         uses: actions/upload-artifact@v4
         with:
-          name: fika-neo-server
-          path: dist/SPT_Runtime/user/mods/fika-server/
+          name: Fika-Neo-Server
+          path: package
           if-no-files-found: error
 
       - name: Upload web app
