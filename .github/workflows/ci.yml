@@ -1,0 +1,72 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [neo, main]
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    branches: [neo, main]
+    paths-ignore:
+      - '**/*.md'
+
+concurrency:
+  group: server-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          cache: true
+          cache-dependency-path: |
+            FikaServer/packages.lock.json
+            FikaShared/packages.lock.json
+            FikaWebApp/packages.lock.json
+
+      - name: Restore
+        run: dotnet restore FikaServer.slnx
+
+      - name: Build
+        run: dotnet build FikaServer.slnx --nologo --no-restore --configuration Release
+
+      - name: Publish server mod
+        run: dotnet publish FikaServer/FikaServer.csproj --nologo --no-restore --configuration Release --output artifacts/server
+
+      - name: Publish web app
+        run: dotnet publish FikaWebApp/FikaWebApp.csproj --nologo --no-restore --configuration Release --output artifacts/webapp
+
+      - name: Stage server package
+        run: |
+          mkdir -p dist/SPT_Runtime/user/mods/fika-server
+          cp artifacts/server/FikaServer.dll dist/SPT_Runtime/user/mods/fika-server/
+          cp artifacts/server/FikaShared.dll dist/SPT_Runtime/user/mods/fika-server/
+          cp -r FikaServer/Assets dist/SPT_Runtime/user/mods/fika-server/assets
+          cp Licenses/* dist/SPT_Runtime/user/mods/fika-server/
+
+      - name: Upload server
+        uses: actions/upload-artifact@v4
+        with:
+          name: fika-neo-server
+          path: dist/SPT_Runtime/user/mods/fika-server/
+          if-no-files-found: error
+
+      - name: Upload web app
+        uses: actions/upload-artifact@v4
+        with:
+          name: fika-neo-webapp
+          path: artifacts/webapp/
+          if-no-files-found: error
