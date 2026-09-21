@@ -294,5 +294,10 @@
     "F_UI_GiveUp": "Hold {0} to give up",
     "F_UI_GivingUp": "Giving up {0:F1}",
     "F_UI_BeenDowned": "{0} is downed",
-    "F_UI_BeenRevived": "{0} has been revived"
+    "F_UI_BeenRevived": "{0} has been revived",
+    "F_UI_HideoutVisitTitle": "{0} 的藏身处",
+    "F_UI_HideoutVisitAction": "{0} · {1}",
+    "F_UI_HideoutVisitRequirements": "{0} · {1}",
+    "F_UI_HideoutVisitTooltip": "材料从你的仓库扣除，升级的是 {0} 的藏身处。",
+    "F_UI_HideoutVisitHost": "主人"
 }

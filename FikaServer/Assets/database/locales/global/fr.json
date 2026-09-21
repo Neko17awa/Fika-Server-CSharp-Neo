@@ -294,5 +294,10 @@
     "F_UI_GiveUp": "Maintenir {0} pour abandonner",
     "F_UI_GivingUp": "Abandonner",
     "F_UI_BeenDowned": "{0} a été abattu",
-    "F_UI_BeenRevived": "{0} a été réanimé"
+    "F_UI_BeenRevived": "{0} a été réanimé",
+    "F_UI_HideoutVisitTitle": "{0}'s Hideout",
+    "F_UI_HideoutVisitAction": "{0} · {1}",
+    "F_UI_HideoutVisitRequirements": "{0} · {1}",
+    "F_UI_HideoutVisitTooltip": "Items are taken from your stash. This upgrades {0}'s hideout.",
+    "F_UI_HideoutVisitHost": "Host"
 }
